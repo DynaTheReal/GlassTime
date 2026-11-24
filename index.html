@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#050506">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GlassTime">
+<title>GlassTime</title>
+<script>
+/* Optional: Firebase-Config hier fest eintragen (sonst über QR-Code aus der PC-App) */
+window.FIREBASE_CONFIG = null; // z. B. { apiKey: "…", databaseURL: "https://…firebaseio.com" }
+</script>
+<style>
+:root{--fg:#f4f4f5;--mut:#8b8b92;--dim:#5a5a60;--line:rgba(255,255,255,.09);--r:22px;--font:-apple-system,"SF Pro Display","Segoe UI",Inter,system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:#050506;color:var(--fg);font-family:var(--font);min-height:100%;-webkit-font-smoothing:antialiased}
+body{padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 96px);overflow-x:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+#fx{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bgv{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(600px 400px at 0% -5%,rgba(255,255,255,.08),transparent 60%),radial-gradient(500px 400px at 110% 105%,rgba(255,255,255,.05),transparent 60%)}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.glass{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.025));border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 20px 50px -20px rgba(0,0,0,.8)}
+.top{display:flex;align-items:center;gap:10px;padding:4px 2px}
+.top b{font-size:17px;font-weight:750;letter-spacing:-.01em}
+.logo{width:22px;height:22px;border-radius:50%;display:inline-block;background:conic-gradient(#fff 0 72%,rgba(255,255,255,.15) 72% 100%);-webkit-mask:radial-gradient(circle,transparent 46%,#000 48%);mask:radial-gradient(circle,transparent 46%,#000 48%)}
+.logo.xl{width:72px;height:72px;animation:spin 6s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.pill{margin-left:auto;font-size:12px;font-weight:650;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--line);color:#ddd;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 8px #fff}.dot.off{background:#555;box-shadow:none}
+.menu{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.hero{padding:24px 22px;overflow:hidden}
+.hero::after{content:"";position:absolute;top:-50%;left:-40%;width:40%;height:200%;transform:rotate(20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);animation:sweep 7s ease-in-out infinite;pointer-events:none}
+@keyframes sweep{0%{left:-40%}60%,100%{left:130%}}
+.eb{font-size:11px;letter-spacing:.3em;color:var(--mut);font-weight:700}
+.big{font-size:clamp(44px,14vw,72px);line-height:.95;font-weight:900;letter-spacing:-.035em;margin:10px 0 14px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(100deg,#fff 0%,#fff 40%,#9d9da4 50%,#fff 60%,#fff 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shim 5s linear infinite}
+.big.dim{opacity:.38;animation:none}
+@keyframes shim{from{background-position:100% 0}to{background-position:-150% 0}}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:650;background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.chip.solid{background:#fff;color:#000}
+.pulse{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.6s infinite}@keyframes pulse{50%{opacity:.3;transform:scale(.7)}}
+.ht{display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.ht small{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;font-weight:650}
+.ht b{font-size:34px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{padding:16px}
+.stat small{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;font-weight:650}
+.stat b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--dim)}
+.panel{padding:18px}
+.panel h3{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline}
+.panel h3 span{font-size:12px;color:var(--mut);font-weight:500}
+.item{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:7px 0}
+.ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-weight:850;background:rgba(255,255,255,.08);border:1px solid var(--line)}
+.ic.w{background:#fff;color:#000}
+.nm{font-weight:650;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm small{color:var(--dim);font-weight:500;margin-left:5px;font-size:11px}
+.bar{height:4px;border-radius:2px;background:rgba(255,255,255,.07);margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:#fff;border-radius:2px}.bar.g i{background:rgba(255,255,255,.45)}
+.tm{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.empty{color:var(--dim);font-size:13px;padding:8px 0}
+.hours{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;height:110px;align-items:end;margin-bottom:18px}
+.hc{display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+.hc .o{background:rgba(255,255,255,.22);border-radius:3px 3px 0 0}.hc .g{background:#fff;border-radius:0 0 3px 3px}
+.hc .o:only-child,.hc .g:only-child{border-radius:3px}
+.hc span{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--dim)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;height:190px;align-items:end;padding:22px 0 24px}
+.wd{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:100%;position:relative}
+.wd .b{width:12px;border-radius:5px;min-height:3px}.wd .b.g{background:#fff}.wd .b.o{background:rgba(255,255,255,.2)}
+.wd span{position:absolute;bottom:-22px;font-size:11px;color:var(--mut)}.wd.t span{color:#fff;font-weight:700}
+.wd em{position:absolute;top:-4px;transform:translateY(-100%);font-style:normal;font-size:9.5px;color:var(--mut);white-space:nowrap}
+.add{display:flex;gap:8px;padding:8px}
+.add input{flex:1;background:transparent;border:0;outline:0;padding:10px;font-size:16px;min-width:0}
+.btn{padding:12px 16px;border-radius:14px;font-weight:700;font-size:15px}
+.btn.p{background:#fff;color:#000}.btn.l{border:1px solid rgba(255,255,255,.16)}.btn.w{width:100%}
+.btn:active{transform:scale(.97)}
+.task{display:flex;align-items:center;gap:13px;padding:15px 14px;border-radius:16px;background:rgba(255,255,255,.045);border:1px solid var(--line);margin-bottom:8px;transition:.25s}
+.chk{width:26px;height:26px;border-radius:50%;border:1.6px solid rgba(255,255,255,.45);display:grid;place-items:center;flex:none;transition:.2s}
+.chk svg{width:14px;height:14px;stroke:#000;stroke-width:3;fill:none;opacity:0;stroke-dasharray:20;stroke-dashoffset:20;transition:.3s}
+.task.d .chk{background:#fff;border-color:#fff}.task.d .chk svg{opacity:1;stroke-dashoffset:0}
+.task .tx{flex:1;font-size:15px;font-weight:550}
+.task.d .tx{color:var(--dim);text-decoration:line-through}
+.task .x{color:var(--dim);padding:6px}
+.sub{font-size:13px;color:var(--mut);font-weight:650;margin:14px 2px 8px}
+.page{display:none;flex-direction:column;gap:14px;animation:pin .4s cubic-bezier(.2,.8,.2,1)}.page.on{display:flex}
+@keyframes pin{from{opacity:0;transform:translateY(8px)}}
+.tabs{background:rgba(14,14,16,.78)!important;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:10;display:flex;gap:4px;padding:6px;border-radius:22px;width:min(92vw,380px)}
+.tabs button{flex:1;padding:11px 6px;border-radius:16px;font-size:13px;font-weight:700;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:3px;transition:.2s;position:relative}
+.tabs svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{background:#fff;color:#000}
+.tabs i{position:absolute;top:4px;right:calc(50% - 22px);font-style:normal;font-size:10px;min-width:17px;height:17px;border-radius:9px;background:#fff;color:#000;display:grid;place-items:center;padding:0 4px}
+.tabs button.on i{background:#000;color:#fff}.tabs i:empty{display:none}
+.login{min-height:80vh;display:flex;flex-direction:column;justify-content:center;gap:12px;text-align:center}
+.login h1{font-size:28px;font-weight:850;letter-spacing:-.02em}
+.inp{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;padding:14px;outline:0;font-size:16px}
+.inp:focus{border-color:rgba(255,255,255,.4)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:rgba(255,255,255,.06);border-radius:14px;padding:4px}
+.seg button{padding:10px;border-radius:11px;font-weight:650;font-size:14px;color:var(--mut)}.seg button.on{background:#fff;color:#000}
+.err{color:#ff8a8a;font-size:13px;min-height:16px}
+.muted{color:var(--mut);font-size:13px;line-height:1.5}
+.stale{font-size:12px;color:var(--mut);text-align:center}
+details{text-align:left;font-size:13px;color:var(--mut)}details textarea{margin-top:8px;font-size:12px;font-family:ui-monospace,monospace}
+.hidden{display:none!important}
+.legend{font-size:11px;color:var(--mut);display:flex;gap:6px;align-items:center}.lg{width:9px;height:9px;border-radius:3px;display:inline-block;margin-left:6px}.lg.w{background:#fff}.lg.g{background:rgba(255,255,255,.25)}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas><div class="bgv"></div>
+<div class="wrap">
+
+  <!-- Login -->
+  <section class="login hidden" id="vLogin">
+    <div style="display:grid;place-items:center"><span class="logo xl"></span></div>
+    <h1>GlassTime</h1>
+    <p class="muted">Deine PC-Bildschirmzeit & Tasks auf dem Handy.</p>
+    <div class="seg"><button class="on" data-k="login">Anmelden</button><button data-k="signup">Registrieren</button></div>
+    <input class="inp" id="lUser" placeholder="Benutzername" autocapitalize="none" autocomplete="username">
+    <input class="inp" id="lPass" type="password" placeholder="Passwort" autocomplete="current-password">
+    <details id="lCfgBox"><summary>Firebase-Config (nur einmal nötig)</summary><textarea class="inp" id="lCfg" rows="5" placeholder="const firebaseConfig = { … }"></textarea></details>
+    <div class="err" id="lErr"></div>
+    <button class="btn p w" id="lGo">Anmelden</button>
+    <p class="muted">Ohne Konto: Im gleichen WLAN den QR-Code in der PC-App (Einstellungen → Handy verbinden) scannen.</p>
+  </section>
+
+  <!-- App -->
+  <section id="vApp" class="hidden">
+    <div class="wrap">
+      <div class="top"><span class="logo"></span><b>GlassTime</b><span class="pill" id="conn"><span class="dot"></span>…</span><button class="menu" id="mBtn" title="Abmelden">⋯</button></div>
+
+      <div class="page on" id="pToday">
+        <div class="glass hero">
+          <div class="eb" id="eb">GERADE</div>
+          <div class="big" id="bigName">—</div>
+          <div class="chips" id="chips"></div>
+          <div class="ht"><small>Spielzeit heute</small><b id="gTot">0:00:00</b></div>
+        </div>
+        <div class="stats">
+          <div class="glass stat"><small>On-PC</small><b id="sOn">–</b><span>aktiv an der Tastatur</span></div>
+          <div class="glass stat"><small>Always-On</small><b id="sAl">–</b><span>PC eingeschaltet</span></div>
+          <div class="glass stat"><small>AFK</small><b id="sAfk">–</b><span>abgezogen</span></div>
+          <div class="glass stat"><small>Tasks</small><b id="sTasks">–</b><span>offen</span></div>
+        </div>
+        <div class="glass panel"><h3>Spiele <span id="gSum"></span></h3><div id="gList"></div></div>
+        <div class="glass panel"><h3>Apps &amp; Browser <span>nicht in der Spielzeit</span></h3><div id="aList"></div></div>
+        <div class="glass panel"><h3>Nach Stunden <span class="legend"><i class="lg w"></i>Spiele<i class="lg g"></i>Andere</span></h3><div class="hours" id="hours"></div></div>
+        <div class="stale" id="stale"></div>
+      </div>
+
+      <div class="page" id="pTasks">
+        <form class="glass add" id="tForm"><input id="tIn" maxlength="140" placeholder="Neuer Task … z. B. Hund rausgehen" enterkeyhint="done"><button class="btn p" type="submit">+</button></form>
+        <div id="tOpen"></div>
+        <div class="sub" id="tDoneH"></div>
+        <div id="tDone"></div>
+      </div>
+
+      <div class="page" id="pWeek">
+        <div class="glass panel"><h3>Letzte 7 Tage <span class="legend"><i class="lg w"></i>Spiele<i class="lg g"></i>On-PC</span></h3><div class="week" id="week"></div></div>
+        <div class="stats">
+          <div class="glass stat"><small>Woche</small><b id="wSum">–</b><span>Spielzeit</span></div>
+          <div class="glass stat"><small>Ø pro Tag</small><b id="wAvg">–</b><span>Spielzeit</span></div>
+        </div>
+        <div class="glass panel"><h3>Top-Spiele <span>7 Tage</span></h3><div id="wTop"></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs glass hidden" id="tabs">
+  <button class="on" data-p="pToday"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Heute</button>
+  <button data-p="pTasks"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/></svg>Tasks<i id="tBadge"></i></button>
+  <button data-p="pWeek"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Woche</button>
+</nav>
+
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LS = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+const sum = (o) => Object.values(o || {}).reduce((a, b) => a + b, 0);
+const sorted = (o) => Object.entries(o || {}).sort((a, b) => b[1] - a[1]);
+const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+function hms(s) { s = Math.max(0, Math.floor(s)); return Math.floor(s / 3600) + ':' + String(Math.floor(s % 3600 / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+function short(s) { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + ' h ' + String(m).padStart(2, '0') + ' min' : m ? m + ' min' : s + ' s'; }
+function dk(ts) { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function setHtml(sel, h) { const el = $(sel); if (el.__h !== h) { el.innerHTML = h; el.__h = h; } }
+
+/* ---------- Verbindung: WLAN (PC direkt) oder Cloud (Firebase) ---------- */
+const params = new URLSearchParams(location.search);
+const hash = new URLSearchParams(location.hash.slice(1));
+if (params.get('k')) LS.set('gt_k', params.get('k'));
+if (hash.get('cfg')) { try { LS.set('gt_cfg', atob(hash.get('cfg'))); } catch {} }
+if (hash.get('u')) $('#lUser').value = hash.get('u');
+if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+
+const isLocal = /^http:/.test(location.protocol) && !!LS.get('gt_k') && location.port === '47821';
+let cfg = window.FIREBASE_CONFIG || (LS.get('gt_cfg') ? JSON.parse(LS.get('gt_cfg')) : null);
+let acc = LS.get('gt_acc') ? JSON.parse(LS.get('gt_acc')) : null;
+let S = null, kind = 'login';
+
+function parseCfg(t) {
+  const g = (k) => { const m = new RegExp(k + '\\s*["\']?\\s*:\\s*["\']([^"\']+)["\']').exec(t); return m ? m[1].trim() : ''; };
+  const apiKey = g('apiKey'), pid = g('projectId'); let databaseURL = g('databaseURL');
+  if (!databaseURL && pid) databaseURL = 'https://' + pid + '-default-rtdb.firebaseio.com';
+  return apiKey && databaseURL ? { apiKey, databaseURL: databaseURL.replace(/\/+$/, '') } : null;
+}
+function fbErr(j) {
+  const m = String((j && j.error && (j.error.message || j.error)) || 'Fehler');
+  if (/EMAIL_EXISTS/.test(m)) return 'Benutzername ist schon vergeben.';
+  if (/INVALID_LOGIN|INVALID_PASSWORD|EMAIL_NOT_FOUND/.test(m)) return 'Benutzername oder Passwort falsch.';
+  if (/WEAK_PASSWORD/.test(m)) return 'Passwort zu kurz (mind. 6 Zeichen).';
+  if (/Permission denied/i.test(m)) return 'Firebase-Regeln blockieren den Zugriff.';
+  return m;
+}
+async function token() {
+  if (acc.idToken && acc.expires > Date.now()) return acc.idToken;
+  const r = await fetch('https://securetoken.googleapis.com/v1/token?key=' + cfg.apiKey, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(acc.refreshToken) });
+  const j = await r.json(); if (!r.ok) throw new Error(fbErr(j));
+  acc.idToken = j.id_token; acc.refreshToken = j.refresh_token; acc.expires = Date.now() + (j.expires_in - 60) * 1000;
+  LS.set('gt_acc', JSON.stringify(acc));
+  return acc.idToken;
+}
+async function db(method, path, body, query) {
+  const t = await token();
+  const r = await fetch(cfg.databaseURL + '/glasstime/' + acc.uid + path + '.json?auth=' + t + (query || ''), { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const j = await r.json().catch(() => null); if (!r.ok) throw new Error(fbErr(j)); return j;
+}
+
+async function load() {
+  if (isLocal) {
+    const r = await fetch('/api/state?k=' + encodeURIComponent(LS.get('gt_k')), { cache: 'no-store' });
+    const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Fehler');
+    j.via = 'wlan'; j.updated = Date.now();
+    return j;
+  }
+  const [days, live, tasks] = await Promise.all([
+    db('GET', '/days', undefined, '&orderBy=%22$key%22&limitToLast=8'),
+    db('GET', '/live'),
+    db('GET', '/tasks'),
+  ]);
+  const today = dk(Date.now());
+  const D = days || {};
+  for (const k of Object.keys(D)) fixDay(D[k]);
+  if (!D[today]) D[today] = fixDay({});
+  const status = live || { kind: 'none', name: '', afkMin: 5 };
+  return {
+    via: 'cloud', today, days: D, status, pc: status.pc || 'PC', updated: status.updated || 0,
+    tasks: Object.values(tasks || {}).filter((t) => !t.deleted).sort((a, b) => (a.done - b.done) || (b.created - a.created)),
+    rawTasks: tasks || {},
+  };
+}
+function fixDay(d) {
+  d.games = d.games || {}; d.apps = d.apps || {}; d.menus = d.menus || {};
+  d.hours = d.hours || new Array(24).fill(0); d.gameHours = d.gameHours || new Array(24).fill(0);
+  d.onPc = d.onPc || 0; d.alwaysOn = d.alwaysOn || 0; d.afk = d.afk || 0; return d;
+}
+
+async function taskOp(op) {
+  if (isLocal) {
+    const r = await fetch('/api/task?k=' + encodeURIComponent(LS.get('gt_k')), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(op) });
+    const j = await r.json(); S.tasks = j.tasks || S.tasks; return;
+  }
+  const now = Date.now();
+  if (op.op === 'add') {
+    const id = now.toString(36) + Math.random().toString(16).slice(2, 8);
+    const t = { id, text: op.text, done: false, created: now, updated: now };
+    await db('PUT', '/tasks/' + id, t); S.tasks.unshift(t);
+  } else {
+    const t = S.rawTasks[op.id] || S.tasks.find((x) => x.id === op.id); if (!t) return;
+    if (op.op === 'toggle') { t.done = !t.done; t.doneAt = t.done ? now : 0; }
+    if (op.op === 'delete') t.deleted = true;
+    t.updated = now;
+    await db('PUT', '/tasks/' + op.id, t);
+    S.tasks = S.tasks.filter((x) => !x.deleted);
+  }
+}
+
+/* ---------- Anzeige ---------- */
+function render() {
+  const d = S.days[S.today] || fixDay({}), st = S.status || {};
+  const games = sum(d.games);
+  const offline = S.via === 'cloud' && Date.now() - S.updated > 120000;
+  $('#conn').innerHTML = `<span class="dot${offline ? ' off' : ''}"></span>${S.via === 'wlan' ? 'WLAN' : 'Cloud'} · ${esc(S.pc || 'PC')}`;
+  const big = $('#bigName'); big.classList.remove('dim');
+  let c = '';
+  if (offline) { $('#eb').textContent = 'PC OFFLINE'; big.textContent = 'Offline'; big.classList.add('dim'); c = `<span class="chip">Zuletzt ${new Date(S.updated).toLocaleString('de-DE', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</span>`; }
+  else if (st.afk) { $('#eb').textContent = 'AFK-MODUS'; big.textContent = 'AFK'; big.classList.add('dim'); c = `<span class="chip"><span class="pulse"></span>keine Tastatur seit ${st.afkMin} min+</span>`; }
+  else if (st.kind === 'game') { $('#eb').textContent = 'SPIELT GERADE'; big.textContent = st.name; c = `<span class="chip solid"><span class="pulse"></span>${esc((st.detail || 'Im Spiel').toUpperCase())}</span>` + (st.session ? `<span class="chip">Session ${hms(st.session.sec)}</span>` : ''); }
+  else if (st.kind === 'menu') { $('#eb').textContent = 'IM MENÜ'; big.textContent = st.name; big.classList.add('dim'); c = `<span class="chip">${esc(st.detail || 'Menü')} · zählt nicht</span>`; }
+  else { $('#eb').textContent = 'KEIN SPIEL AKTIV'; big.textContent = st.name || 'Desktop'; big.classList.add('dim'); c = `<span class="chip">App</span>`; }
+  setHtml('#chips', c);
+  $('#gTot').textContent = hms(games);
+  $('#sOn').textContent = short(d.onPc); $('#sAl').textContent = short(d.alwaysOn); $('#sAfk').textContent = short(d.afk);
+  const open = S.tasks.filter((t) => !t.done);
+  $('#sTasks').textContent = open.length; $('#tBadge').textContent = open.length || '';
+  const g = sorted(d.games), gm = g.length ? g[0][1] : 1;
+  $('#gSum').textContent = g.length ? short(games) : '';
+  setHtml('#gList', g.map(([n, t]) => row(n, t, gm, true, st.kind === 'game' && st.name === n && !st.afk && !offline)).join('') + sorted(d.menus).map(([n, t]) => `<div class="item" style="opacity:.5"><div class="ic">${esc(n[0])}</div><div class="nm">${esc(n)}<small>Lobby · zählt nicht</small></div><div class="tm">${short(t)}</div></div>`).join('') || '<div class="empty">Heute noch keine Spielzeit.</div>');
+  const a = sorted(d.apps), am = a.length ? a[0][1] : 1;
+  setHtml('#aList', a.slice(0, 8).map(([n, t]) => row(n, t, am, false, false)).join('') || '<div class="empty">Noch nichts.</div>');
+  const hm = Math.max(1, ...d.hours); let hh = '';
+  for (let i = 0; i < 24; i++) { const gs = d.gameHours[i] || 0, os = Math.max(0, (d.hours[i] || 0) - gs); hh += `<div class="hc">${os > 0 ? `<div class="o" style="height:${os / hm * 100}%"></div>` : ''}${gs > 0 ? `<div class="g" style="height:${gs / hm * 100}%"></div>` : ''}${i % 6 === 0 ? `<span>${i}</span>` : ''}</div>`; }
+  setHtml('#hours', hh);
+  $('#stale').textContent = S.via === 'cloud' ? 'Stand: ' + (S.updated ? new Date(S.updated).toLocaleTimeString('de-DE') : '–') : 'Live vom PC';
+  renderTasks(); renderWeek();
+}
+function row(n, t, m, game, live) { return `<div class="item"><div class="ic${game ? ' w' : ''}">${esc(n[0] || '?')}</div><div style="min-width:0"><div class="nm">${esc(n)}${live ? '<small>● live</small>' : ''}</div><div class="bar${game ? '' : ' g'}"><i style="width:${Math.max(3, t / m * 100)}%"></i></div></div><div class="tm">${short(t)}</div></div>`; }
+function renderTasks() {
+  const open = S.tasks.filter((t) => !t.done), done = S.tasks.filter((t) => t.done);
+  const r = (t) => `<div class="task${t.done ? ' d' : ''}" data-id="${t.id}"><button class="chk" data-a="toggle"><svg viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-7"/></svg></button><div class="tx">${esc(t.text)}</div><button class="x" data-a="delete">✕</button></div>`;
+  setHtml('#tOpen', open.map(r).join('') || '<div class="empty" style="text-align:center;padding:20px">Alles erledigt ✨</div>');
+  $('#tDoneH').textContent = done.length ? 'Erledigt (' + done.length + ')' : '';
+  setHtml('#tDone', done.slice(0, 30).map(r).join(''));
+}
+function renderWeek() {
+  const vals = []; for (let i = 6; i >= 0; i--) { const k = dk(Date.now() - i * 86400000); const d = S.days[k] ? fixDay(S.days[k]) : fixDay({}); vals.push({ k, g: sum(d.games), o: d.onPc, d }); }
+  const max = Math.max(1, ...vals.map((v) => Math.max(v.g, v.o)));
+  setHtml('#week', vals.map((v) => `<div class="wd${v.k === S.today ? ' t' : ''}"><em>${v.g ? short(v.g).replace(' min', 'm').replace(' h ', 'h ') : ''}</em><div class="b g" style="height:${v.g / max * 100}%"></div><div class="b o" style="height:${v.o / max * 100}%"></div><span>${v.k === S.today ? 'Heute' : WD[new Date(v.k + 'T12:00').getDay()]}</span></div>`).join(''));
+  const tot = vals.reduce((a, v) => a + v.g, 0); $('#wSum').textContent = short(tot); $('#wAvg').textContent = short(tot / 7);
+  const per = {}; vals.forEach((v) => Object.entries(v.d.games).forEach(([n, t]) => per[n] = (per[n] || 0) + t));
+  const top = sorted(per), tm = top.length ? top[0][1] : 1;
+  setHtml('#wTop', top.slice(0, 6).map(([n, t]) => row(n, t, tm, true, false)).join('') || '<div class="empty">Noch keine Daten.</div>');
+}
+
+/* ---------- Ablauf ---------- */
+let timer = null;
+async function refresh() {
+  try { const n = await load(); if (S && n.via === 'cloud') n.tasks = n.tasks; S = n; render(); }
+  catch (e) { if (!isLocal && /Regeln|refresh|TOKEN|INVALID/i.test(e.message)) { logout(); $('#lErr').textContent = e.message; } else { $('#stale').textContent = 'Verbindung … ' + e.message; } }
+}
+function showApp() {
+  $('#vLogin').classList.add('hidden'); $('#vApp').classList.remove('hidden'); $('#tabs').classList.remove('hidden');
+  refresh(); clearInterval(timer); timer = setInterval(refresh, isLocal ? 2000 : 6000);
+}
+function showLogin() {
+  $('#vApp').classList.add('hidden'); $('#tabs').classList.add('hidden'); $('#vLogin').classList.remove('hidden');
+  $('#lCfgBox').open = !cfg;
+}
+function logout() { acc = null; LS.set('gt_acc', null); clearInterval(timer); if (isLocal) { LS.set('gt_k', null); } showLogin(); }
+
+$$('.seg button').forEach((b) => b.onclick = () => { kind = b.dataset.k; $$('.seg button').forEach((x) => x.classList.toggle('on', x === b)); $('#lGo').textContent = kind === 'login' ? 'Anmelden' : 'Konto erstellen'; });
+$('#lGo').onclick = async () => {
+  $('#lErr').textContent = '';
+  const ct = $('#lCfg').value.trim();
+  if (ct) { const c = parseCfg(ct); if (!c) { $('#lErr').textContent = 'Firebase-Config nicht erkannt.'; return; } cfg = c; LS.set('gt_cfg', JSON.stringify(c)); }
+  if (!cfg) { $('#lErr').textContent = 'Erst die Firebase-Config einfügen (oder QR-Code aus der PC-App scannen).'; $('#lCfgBox').open = true; return; }
+  const u = $('#lUser').value.trim();
+  if (!/^[a-zA-Z0-9_.-]{3,20}$/.test(u)) { $('#lErr').textContent = 'Benutzername: 3–20 Zeichen.'; return; }
+  $('#lGo').textContent = '…';
+  try {
+    const r = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:' + (kind === 'signup' ? 'signUp' : 'signInWithPassword') + '?key=' + cfg.apiKey, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: u.toLowerCase() + '@glasstime.app', password: $('#lPass').value, returnSecureToken: true }) });
+    const j = await r.json(); if (!r.ok) throw new Error(fbErr(j));
+    acc = { uid: j.localId, idToken: j.idToken, refreshToken: j.refreshToken, expires: Date.now() + (j.expiresIn - 60) * 1000, username: u };
+    LS.set('gt_acc', JSON.stringify(acc));
+    showApp();
+  } catch (e) { $('#lErr').textContent = e.message; }
+  $('#lGo').textContent = kind === 'login' ? 'Anmelden' : 'Konto erstellen';
+};
+$('#lPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#lGo').click(); });
+$('#mBtn').onclick = () => { if (confirm(isLocal ? 'WLAN-Verbindung trennen?' : 'Abmelden?')) logout(); };
+$$('#tabs button').forEach((b) => b.onclick = () => { $$('#tabs button').forEach((x) => x.classList.toggle('on', x === b)); $$('.page').forEach((p) => p.classList.toggle('on', p.id === b.dataset.p)); scrollTo(0, 0); });
+$('#tForm').onsubmit = async (e) => { e.preventDefault(); const v = $('#tIn').value.trim(); if (!v) return; $('#tIn').value = ''; await taskOp({ op: 'add', text: v }); renderTasks(); render(); };
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const el = b.closest('.task'); if (b.dataset.a === 'toggle') el.classList.toggle('d');
+  if (navigator.vibrate) navigator.vibrate(12);
+  await taskOp({ op: b.dataset.a, id: el.dataset.id }); setTimeout(() => { renderTasks(); render(); }, 300);
+});
+
+/* Partikel an den Rändern */
+(function () {
+  const cv = $('#fx'), ctx = cv.getContext('2d'); let W, H, P = [];
+  const E = 60;
+  function sp() { return { e: Math.floor(Math.random() * 4), dp: Math.pow(Math.random(), 2.2) * E, t: Math.random(), v: (Math.random() * 0.00015 + 0.00004) * (Math.random() < .5 ? -1 : 1), r: Math.random() * 1.1 + .35, tw: Math.random() * 6, ts: Math.random() * .02 + .006 }; }
+  function rs() { const d = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0); P = Array.from({ length: Math.round((W + H) / 10) }, sp); }
+  function f() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of P) {
+      p.t = (p.t + p.v + 1) % 1; p.tw += p.ts;
+      const d = p.dp + Math.sin(p.tw * .7) * 4;
+      const [x, y] = p.e === 0 ? [p.t * W, d] : p.e === 1 ? [W - d, p.t * H] : p.e === 2 ? [p.t * W, H - d] : [d, p.t * H];
+      ctx.fillStyle = `rgba(255,255,255,${(1 - p.dp / E) * (.3 + .7 * (.5 + .5 * Math.sin(p.tw))) * .8})`;
+      ctx.beginPath(); ctx.arc(x, y, p.r, 0, 7); ctx.fill();
+    }
+    requestAnimationFrame(f);
+  }
+  addEventListener('resize', rs); rs(); f();
+})();
+
+if (isLocal || (acc && cfg)) showApp(); else showLogin();
+</script>
+</body>
+</html>
